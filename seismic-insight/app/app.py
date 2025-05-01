@@ -1,37 +1,38 @@
-from flask import Flask, render_template, jsonify
-import pandas as pd
-from src.analysis import perform_analysis
+from flask import Flask, render_template_string
+import folium
+import os
 
 app = Flask(__name__)
 
-# Route für die Startseite
-@app.route('/')
-def home():
-    try:
-        # Lade die bereinigten Daten aus der CSV-Datei
-        df = pd.read_csv('../data/cleaned_data.csv')
-        # Konvertiere die Daten in ein JSON-Format
-        return jsonify(df.to_dict(orient='records'))
-    except Exception as e:
-        return jsonify({"error": str(e)})
+def create_world_map():
+    # Erstelle eine einfache Weltkarte
+    world_map = folium.Map(location=[0, 0], zoom_start=2)
+    return world_map
 
-# Route für Visualisierungen
-@app.route('/visualization')
-def visualization():
-    return "<h2>Hier könnten Visualisierungen eingebettet werden</h2>"
-
-# Route für Analyseergebnisse
-@app.route('/analysis')
-def analysis():
+@app.route('/worldmap')
+def worldmap():
     try:
-        # Lade die bereinigten Daten
-        df = pd.read_csv('../data/cleaned_data.csv')
-        # Führe die Analyse durch
-        results = perform_analysis(df)
-        # Gebe die Ergebnisse im JSON-Format zurück
-        return jsonify(results)
+        # Erstelle die Weltkarte
+        world_map = create_world_map()
+
+        # Speichere die Karte als HTML-String
+        map_html = world_map._repr_html_()
+
+        # Render die Karte direkt im Browser
+        return render_template_string("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Weltkarte</title>
+        </head>
+        <body>
+            <h2>Weltkarte</h2>
+            {{ map_html|safe }}
+        </body>
+        </html>
+        """, map_html=map_html)
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return f"<h2>Fehler: {str(e)}</h2>"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
