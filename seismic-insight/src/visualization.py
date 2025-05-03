@@ -3,6 +3,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import folium
+import os
+os.makedirs("outputs", exist_ok=True)
+
 
 def plot_magnitude_over_time(df: pd.DataFrame, output_path: str = "outputs/magnitude_over_time.png"):
     plt.figure(figsize=(10, 5))
