@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Erdbeben-Weltkarte</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
+  <script src="/static/quake_data.js"></script>
+</head>
+<body>
+  <button
+    id="showSummary"
+    style="position:absolute;top:10px;left:10px;z-index:1000">
+    Trends anzeigen
+  </button>
+  <div id="map" style="width:100%; height:100vh;"></div>
+
+  <script>
+
+    const map = L.map('map').setView([20,0], 2);
+    L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { attribution: '© OpenStreetMap' }
+    ).addTo(map);
+
+
+    console.log('Loaded quakeData:', quakeData);
+    L.geoJSON(quakeData, {
+      pointToLayer: (feat, latlng) =>
+        L.circleMarker(latlng,{radius: feat.properties.mag * 2}),
+      onEachFeature: (feat, layer) =>
+        layer.bindPopup(
+          `<strong>Ort:</strong> ${feat.properties.place}
+           <br><strong>Mag:</strong> ${feat.properties.mag}
+           <br><strong>Zeit:</strong> ${new Date(feat.properties.time).toUTCString()}`
+        )
+    }).addTo(map);
+
+
+    document.getElementById('showSummary')
+      .addEventListener('click', () => {
+        console.log('Button clicked – fetching /summary');
+        fetch('/summary')
+          .then(res => {
+            if (!res.ok) throw new Error(res.status);
+            return res.json();
+          })
+          .then(data => {
+            console.log('Received summary:', data.summary);
+            L.popup({ maxWidth: 400 })
+              .setLatLng(map.getCenter())
+              .setContent(`<h4>Trends</h4><p>${data.summary}</p>`)
+              .openOn(map);
+          })
+          .catch(err => console.error('Fetch error:', err));
+      });
+  </script>
+</body>
+</html>
